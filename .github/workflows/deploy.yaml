@@ -1,0 +1,132 @@
+---
+name: Templete Deploy
+run-name: Terraform Deploy Workflow
+
+on:
+  workflow_call:
+    inputs:
+      ENVIRONMENT:
+        required: true
+        type: string
+      AWS_REGION:
+        required: true
+        type: string
+    secrets:
+      DOMAINNAME:
+        required: true
+      AWS_ACCOUNT_ID:
+        required: true
+      AWS_ROLE_ARN:
+        required: true
+      AWS_S3_BACKEND:
+        required: true
+      AWS_S3_BACKEND_KEY:
+        required: true
+
+jobs:
+  Deploy:
+    runs-on: ubuntu-latest
+
+    environment: ${{ inputs.ENVIRONMENT }}
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Setup Environment variable
+        run: |
+          echo "${{ secrets.AWS_ACCOUNT_ID }} ${{ secrets.DOMAINNAME }}"
+          echo "ENVIRONMENT=${{ inputs.ENVIRONMENT }}" >> $GITHUB_ENV
+          echo "👷$ENVIRONMENT"
+
+      - name: Checkout Template Code
+        uses: actions/checkout@v4
+          with:
+            repository: edelux/terraform-template
+      - name: spy T
+        run: |
+          pwd
+          ls -alR
+
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: spy
+        run: |
+          pwd
+          ls -alR
+
+
+      - name: Setup AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          audience: sts.amazonaws.com
+          aws-region: ${{ inputs.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: apt install
+        run: |
+          sudo apt update 2>&1> /dev/null
+          test -e /usr/bin/j2       ||  sudo apt install -y j2cli 2>&1> /dev/null    && echo "✨ j2-> Istalled sussesfuly"        || echo "💥 j2-> Installed faulere"
+          test -e /usr/bin/envsubst ||  sudo apt install -y gettext 2>&1> /dev/null  && echo "✨ envsubst-> Istalled sussesfuly"  || echo "💥 envsubst-> Installed faulere"
+
+#      - name: Create Backend
+#        run: |
+#          export AWS_S3_BACKEND=${{ secrets.AWS_S3_BACKEND }}
+#          export AWS_S3_BACKEND_KEY=${{ vars.AWS_S3_BACKEND_KEY }}
+#
+#          ## Create Bucket if not exist
+#          if aws s3 ls "s3://${{ secrets.AWS_S3_BACKEND }}" 2>&1 | grep -q 'NoSuchBucket'; then
+#            echo "⚠️ Bucket not found, It will be created"
+#
+#            mkdir -p bootstrap
+#            j2 -e AWS_S3_BACKEND templates/backend.bootstrap.j2 -o bootstrap/main.tf
+#
+#            terraform -chdir=bootstrap init
+#            terraform -chdir=bootstrap apply -auto-approve
+#            echo "✅ Terraform backend created successfully."
+#
+#            aws s3 cp bootstrap/terraform.tfstate s3://${{ secrets.AWS_S3_BACKEND }}/bootstrap/ 
+#            echo "✨ Terraform backed up successfully."
+#          else
+#            echo "♻️ S3 bucket already exists."
+#          fi
+#
+#          ## Create remote stats for environment if not exist
+#          if aws s3 ls "s3://${{ secrets.AWS_S3_BACKEND }}/env:/${{ inputs.ENVIRONMENT }}/${{ secrets.AWS_S3_BACKEND_KEY }}" ; then
+#            echo "♻ S3 terraform state for ${{ inputs.ENVIRONMENT }} already exists."
+#          else
+#            j2 -e AWS_S3_BACKEND -e AWS_S3_BACKEND_KEY templates/backend.j2 -o backend.conf && echo "✨ backend.conf"
+#            terraform init -backend-config=backend.conf
+#            terraform workspace new ${{ inputs.ENVIRONMENT }} && echo "👷 ${{ inputs.ENVIRONMENT }} workspace "
+#            terraform workspace list
+#            rm -fr .terraform* 2>&1 >/dev/null
+#          fi
+#          unset AWS_S3_BACKEND AWS_BACKEND_KEY_NETWORKING
+#
+#      - name: Init
+#        run: |
+#          export AWS_S3_BACKEND=${{ secrets.AWS_S3_BACKEND }}
+#          export AWS_S3_BACKEND_KEY=${{ vars.AWS_S3_BACKEND_KEY }}
+#
+#          j2 -e AWS_S3_BACKEND -e AWS_S3_BACKEND_KEY templates/backend.j2 -o backend.conf && echo "✨ backend.conf"
+#          unset AWS_S3_BACKEND AWS_BACKEND_KEY_NETWORKING
+#
+#          terraform init -backend-config=backend.conf
+#          terraform workspace select ${{ inputs.ENVIRONMENT }} && echo "👷 ${{ inputs.ENVIRONMENT }} workspace " || \
+#                                                                  echo "🚨${{ inputs.ENVIRONMENT }} workspace don't exist🚨'"
+#          echo "👷terraform workspace list" && terraform workspace list
+#
+#      - name: Validate
+#        run: |
+#          terraform validate && echo "✅"
+#
+#      - name: Apply
+#        run: |
+#          terraform apply -var="environment=$ENVIRONMENT" -auto-approve && \
+#              printf '%s\n' '✨✨✨' "✨✨Deploy ${{ inputs.ENVIRONMENT }}🍻" '✨'  || \
+#              printf '%s\n' '🔥🔥🔥' '🔥🔥Error to Deploy🚑️' '🔥'
