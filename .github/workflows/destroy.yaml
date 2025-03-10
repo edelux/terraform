@@ -1,40 +1,54 @@
 ---
-name: Destroy
-run-name: Destroy Workflow
+name: Template Destroy
+run-name: Terraform Destroy Workflow
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
-      uphold:
-        description: "Do you confirm? yes/no"
+      ENVIRONMENT:
+        type: string
         required: true
-        type: boolean
-        default: false
-      environment:
-        description: "Environment for Destroy"
+      AWS_REGION:
+        type: string
         required: true
-        type: choice
-        options:
-          - dev
-          - qa
-          - staging
-          - prod
-          - backend
+    secrets:
+      DOMAINNAME:
+        required: true
+      AWS_ACCOUNT_ID:
+        required: true
+      AWS_ROLE_ARN:
+        required: true
+      AWS_S3_BACKEND:
+        required: true
+      AWS_S3_BACKEND_KEY:
+        required: true
+
 jobs:
   Destroy:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
+
+    environment: ${{ inputs.ENVIRONMENT }}
+
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
+      - name: Setup Environment variable
+        run: |
+          echo "${{ secrets.AWS_ACCOUNT_ID }} ${{ secrets.DOMAINNAME }}"
+          echo "ENVIRONMENT=${{ inputs.ENVIRONMENT }}" >> $GITHUB_ENV
+          echo "👷$ENVIRONMENT"
+
       - name: Checkout Code
         uses: actions/checkout@v4
   
       - name: Setup AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
+          audience: sts.amazonaws.com
           aws-region: ${{ vars.AWS_REGION }}
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
   
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -60,16 +74,13 @@ jobs:
           sudo apt install -y j2cli 2>&1> /dev/null
 
           export AWS_S3_BACKEND=${{ secrets.AWS_S3_BACKEND }}
-          export AWS_BACKEND_KEY_NETWORKING=${{ vars.AWS_BACKEND_KEY_NETWORKING }}
-          j2 -e AWS_S3_BACKEND -e AWS_BACKEND_KEY_NETWORKING templates/backend.j2 -o backend.conf
-          unset AWS_BACKEND_KEY_NETWORKING AWS_S3_BACKEND
+          export AWS_S3_BACKEND_KEY=${{ secrets.AWS_S3_BACKEND_KEY }}
+          j2 -e AWS_S3_BACKEND -e AWS_S3_BACKEND_KEY templates/backend.j2 -o backend.conf
+          unset AWS_S3_BACKEND_KEY AWS_S3_BACKEND
 
           terraform init -backend-config=backend.conf
           terraform workspace select ${{ env.ENVIRONMENT }}
 
-          test -e configs.yaml && j2 configs.yaml -o configs.yaml
-          test -e configs.yaml.j2 && j2 configs.yaml.j2 -o configs.yaml
-          test -e templates/configs.yaml.j2 && j2 templates/configs.yaml.j2 -o configs.yaml
-
-          terraform destroy -var="environment=$ENVIRONMENT" -auto-approve
-          echo "🚨🚨🚨Destroy ${{ inputs.environment }} infraestructure 🚨🚨🚨"
+          terraform destroy -var="environment=$ENVIRONMENT" -auto-approve && \
+             printf '%s\n' '🔥🔥🔥' "🔥🔥Destroy ${{ inputs.environment }} infraestructure" '🔥' || \
+                printf '%s\n' '💥💥💥' "💥💥Error to destroy inputs.environment }} infraestructure" '💥'
