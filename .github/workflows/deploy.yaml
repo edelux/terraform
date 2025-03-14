@@ -122,5 +122,5 @@ jobs:
       - name: Apply
         run: |
           terraform apply -var="environment=$ENVIRONMENT" -auto-approve && \
-             printf '%s\n' '✨✨✨' "✨✨Deploy ${{ inputs.ENVIRONMENT }}   🏗️ " '✨' || \
+             printf '%s\n' '✨✨✨' "✨✨  Deploy ${{ inputs.ENVIRONMENT }}   🏗️ " '✨' || \
                 printf '%s\n' '🔥🔥🔥' '🔥🔥Error to Deploy    🚑️' '🔥'
