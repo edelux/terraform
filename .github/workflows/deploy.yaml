@@ -43,16 +43,12 @@ jobs:
         with:
           repository: edelux/terraform-template
       - name: backup
-        run: tar cvf ../templates.tar templates
+        run: tar cf ../templates.tar templates
 
       - name: Checkout Code
         uses: actions/checkout@v4
-      - name: spy
-        run: |
-          pwd
-          ls -l
-          tar xvf ../templates.tar && rm ../templates.tar
-          ls -l templates || true
+      - name: restore
+        run: tar xf ../templates.tar && rm ../templates.tar
 
       - name: Setup AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -109,25 +105,23 @@ jobs:
           export AWS_S3_BACKEND=${{ secrets.AWS_S3_BACKEND }}
           export AWS_S3_BACKEND_KEY=${{ secrets.AWS_S3_BACKEND_KEY }}
 
-          echo "${{ secrets.AWS_S3_BACKEND }}|${{ secrets.AWS_S3_BACKEND_KEY }}"
-          cat templates/backend.j2
+          j2 -e AWS_S3_BACKEND -e AWS_S3_BACKEND_KEY templates/backend.j2 -o backend.conf && echo "✨ backend.conf"
+          unset AWS_S3_BACKEND AWS_BACKEND_KEY_NETWORKING
 
-#          j2 -e AWS_S3_BACKEND -e AWS_S3_BACKEND_KEY templates/backend.j2 -o backend.conf && echo "✨ backend.conf"
-#          unset AWS_S3_BACKEND AWS_BACKEND_KEY_NETWORKING
-#
-#          terraform init -backend-config=backend.conf
-#          terraform workspace select ${{ inputs.ENVIRONMENT }} && \
-#             echo "👷 ${{ inputs.ENVIRONMENT }} workspace " || \
-#                echo "🚨${{ inputs.ENVIRONMENT }} workspace don't exist🚨'"
-#
-#          echo "👷terraform workspace list" && terraform workspace list
-#
-#      - name: Validate
-#        run: |
-#          terraform validate && echo "✅"
-#
-#      - name: Apply
-#        run: |
-#          terraform apply -var="environment=$ENVIRONMENT" -auto-approve && \
-#              printf '%s\n' '✨✨✨' "✨✨Deploy ${{ inputs.ENVIRONMENT }}🍻" '✨'  || \
-#                  printf '%s\n' '🔥🔥🔥' '🔥🔥Error to Deploy🚑️' '🔥'
+          terraform init -backend-config=backend.conf
+          terraform workspace select ${{ inputs.ENVIRONMENT }} && \
+             echo "👷 ${{ inputs.ENVIRONMENT }} workspace " || \
+                echo "🚨${{ inputs.ENVIRONMENT }} workspace don't exist🚨'"
+
+          echo "👷terraform workspace list" && terraform workspace list
+
+      - name: Validate
+        run: 
+          terraform validate && \
+            echo "✅"
+
+      - name: Apply
+        run: 
+          terraform apply -var="environment=$ENVIRONMENT" -auto-approve && \
+             printf '%s\n' '✨✨✨' "✨✨Deploy ${{ inputs.ENVIRONMENT }}🍻" '✨' || \
+                printf '%s\n' '🔥🔥🔥' '🔥🔥Error to Deploy🚑️' '🔥'
