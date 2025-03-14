@@ -46,7 +46,7 @@ jobs:
         run: |
           pwd
           ls -l
-          ls -l templetes || true
+          ls -l templates || true
 
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -54,7 +54,7 @@ jobs:
         run: |
           pwd
           ls -l
-          ls -l templetes || true
+          ls -l templates || true
 
       - name: Setup AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
