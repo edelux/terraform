@@ -116,12 +116,11 @@ jobs:
           echo "👷terraform workspace list" && terraform workspace list
 
       - name: Validate
-        run: 
-          terraform validate && \
-            echo "✅"
+        run: |
+          terraform validate && echo "✅"
 
       - name: Apply
-        run: 
+        run: |
           terraform apply -var="environment=$ENVIRONMENT" -auto-approve && \
              printf '%s\n' '✨✨✨' "✨✨Deploy ${{ inputs.ENVIRONMENT }}🍻" '✨' || \
                 printf '%s\n' '🔥🔥🔥' '🔥🔥Error to Deploy🚑️' '🔥'
