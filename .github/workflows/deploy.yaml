@@ -42,12 +42,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: edelux/terraform-template
-      - name: backup
+      - name: Backup Templates
         run: tar cf ../templates.tar templates
 
       - name: Checkout Code
         uses: actions/checkout@v4
-      - name: restore
+      - name: Restore Templates
         run: tar xf ../templates.tar && rm ../templates.tar
 
       - name: Setup AWS Credentials
@@ -98,7 +98,7 @@ jobs:
             terraform workspace list
             rm -fr .terraform* 2>&1 >/dev/null
           fi
-          unset AWS_S3_BACKEND AWS_BACKEND_KEY_NETWORKING
+          unset AWS_S3_BACKEND AWS_S3_BACKEND_KEY
 
       - name: Init
         run: |
@@ -106,7 +106,7 @@ jobs:
           export AWS_S3_BACKEND_KEY=${{ secrets.AWS_S3_BACKEND_KEY }}
 
           j2 -e AWS_S3_BACKEND -e AWS_S3_BACKEND_KEY templates/backend.j2 -o backend.conf && echo "✨ backend.conf"
-          unset AWS_S3_BACKEND AWS_BACKEND_KEY_NETWORKING
+          unset AWS_S3_BACKEND AWS_S3_BACKEND_KEY
 
           terraform init -backend-config=backend.conf
           terraform workspace select ${{ inputs.ENVIRONMENT }} && \
@@ -117,10 +117,10 @@ jobs:
 
       - name: Validate
         run: |
-          terraform validate && echo "✅"
+          terraform validate && echo "✅" || echo "💥"
 
       - name: Apply
         run: |
           terraform apply -var="environment=$ENVIRONMENT" -auto-approve && \
-             printf '%s\n' '✨✨✨' "✨✨Deploy ${{ inputs.ENVIRONMENT }}🍻" '✨' || \
-                printf '%s\n' '🔥🔥🔥' '🔥🔥Error to Deploy🚑️' '🔥'
+             printf '%s\n' '✨✨✨' "✨✨Deploy ${{ inputs.ENVIRONMENT }}   🏗️ " '✨' || \
+                printf '%s\n' '🔥🔥🔥' '🔥🔥Error to Deploy    🚑️' '🔥'
