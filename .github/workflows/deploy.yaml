@@ -26,7 +26,6 @@ on:
 jobs:
   Deploy:
     runs-on: ubuntu-latest
-
     environment: ${{ inputs.ENVIRONMENT }}
 
     permissions:
@@ -102,22 +101,25 @@ jobs:
           export AWS_S3_BACKEND=${{ secrets.AWS_S3_BACKEND }}
           export AWS_S3_BACKEND_KEY=${{ secrets.AWS_S3_BACKEND_KEY }}
 
-          j2 -e AWS_S3_BACKEND -e AWS_S3_BACKEND_KEY templates/backend.j2 -o backend.conf && echo "✨ backend.conf"
-          unset AWS_S3_BACKEND AWS_BACKEND_KEY_NETWORKING
+          echo "${{ secrets.AWS_S3_BACKEND }}|secrets.AWS_S3_BACKEND_KEY"
+          cat templates/backend.j2
 
-          terraform init -backend-config=backend.conf
-          terraform workspace select ${{ inputs.ENVIRONMENT }} && \
-             echo "👷 ${{ inputs.ENVIRONMENT }} workspace " || \
-                echo "🚨${{ inputs.ENVIRONMENT }} workspace don't exist🚨'"
-
-          echo "👷terraform workspace list" && terraform workspace list
-
-      - name: Validate
-        run: |
-          terraform validate && echo "✅"
-
-      - name: Apply
-        run: |
-          terraform apply -var="environment=$ENVIRONMENT" -auto-approve && \
-              printf '%s\n' '✨✨✨' "✨✨Deploy ${{ inputs.ENVIRONMENT }}🍻" '✨'  || \
-                  printf '%s\n' '🔥🔥🔥' '🔥🔥Error to Deploy🚑️' '🔥'
+#          j2 -e AWS_S3_BACKEND -e AWS_S3_BACKEND_KEY templates/backend.j2 -o backend.conf && echo "✨ backend.conf"
+#          unset AWS_S3_BACKEND AWS_BACKEND_KEY_NETWORKING
+#
+#          terraform init -backend-config=backend.conf
+#          terraform workspace select ${{ inputs.ENVIRONMENT }} && \
+#             echo "👷 ${{ inputs.ENVIRONMENT }} workspace " || \
+#                echo "🚨${{ inputs.ENVIRONMENT }} workspace don't exist🚨'"
+#
+#          echo "👷terraform workspace list" && terraform workspace list
+#
+#      - name: Validate
+#        run: |
+#          terraform validate && echo "✅"
+#
+#      - name: Apply
+#        run: |
+#          terraform apply -var="environment=$ENVIRONMENT" -auto-approve && \
+#              printf '%s\n' '✨✨✨' "✨✨Deploy ${{ inputs.ENVIRONMENT }}🍻" '✨'  || \
+#                  printf '%s\n' '🔥🔥🔥' '🔥🔥Error to Deploy🚑️' '🔥'
