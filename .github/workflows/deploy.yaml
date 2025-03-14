@@ -42,20 +42,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: edelux/terraform-template
-      - name: spy
-        run: |
-          pwd
-          ls -l
-          ls -l templates || true
+      - name: backup
+        run: tar cvf ../templates.tar templates
 
       - name: Checkout Code
         uses: actions/checkout@v4
-        with:
-          clean: false
       - name: spy
         run: |
           pwd
           ls -l
+          tar xvf ../templates.tar && rm ../templates.tar
           ls -l templates || true
 
       - name: Setup AWS Credentials
