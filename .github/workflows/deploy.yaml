@@ -42,15 +42,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: edelux/terraform-template
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
       - name: spy
         run: |
+          mv ../terraform-template/templetes .
           pwd
           ls -l
           ls -l templetes/backend.j2
           cat templetes/backend.j2
-
-      - name: Checkout Code
-        uses: actions/checkout@v4
 
       - name: Setup AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
