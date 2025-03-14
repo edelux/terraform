@@ -36,7 +36,7 @@ jobs:
     steps:
       - name: Setup Environment variable
         run: |
-          echo "${{ inputs.ENVIRONMENT}} ${{ inputs.AWS_REGION}}"
+          echo "${{ inputs.ENVIRONMENT }} ${{ inputs.AWS_REGION }}"
           echo "${{ secrets.AWS_ACCOUNT_ID }} ${{ secrets.DOMAINNAME }} | ${{ secrets.AWS_ROLE_ARN }} | ${{ secrets.AWS_S3_BACKEND }} | ${{ secrets.AWS_S3_BACKEND_KEY }}"
           echo "ENVIRONMENT=${{ inputs.ENVIRONMENT }}" >> $GITHUB_ENV
           echo "👷$ENVIRONMENT"
