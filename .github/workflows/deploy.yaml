@@ -47,11 +47,9 @@ jobs:
         uses: actions/checkout@v4
       - name: spy
         run: |
-          mv ../terraform-template/templetes .
           pwd
           ls -l
-          ls -l templetes/backend.j2
-          cat templetes/backend.j2
+          ls -l ..
 
       - name: Setup AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
