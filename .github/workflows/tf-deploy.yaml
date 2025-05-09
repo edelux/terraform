@@ -23,7 +23,7 @@ jobs:
         run: |
           pwd
           ls -l
-          tar cf ../templates.tar templates && rm -fr templates
+          tar cf ../templates.tar templates && rm -fr templates LICENSE README.md
 
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -47,6 +47,9 @@ jobs:
 
       - name: Create Backend
         run: |
+          export AWS_REGION=${{ vars.AWS_REGION }}
+          export AWS_S3_BACKEND=${{ vars.AWS_S3_BACKEND }}
+          export AWS_S3_BACKEND_KEY=${{ vars.AWS_S3_BACKEND_KEY }}
 
           ## Create Bucket if not exist
           if aws s3api head-bucket --bucket "${{ vars.AWS_S3_BACKEND }}" >/dev/null 2>&1 ; then
@@ -55,13 +58,15 @@ jobs:
             echo "⚠️ Bucket not found, Creating it now..."
             mkdir -p /tmp/backend
             j2 templates/1.bootstrap.j2 -o /tmp/backend/main.tf
+            cat /tmp/backend/main.tf
             terraform -chdir=/tmp/backend init
             terraform -chdir=/tmp/backend apply -auto-approve
 
             ( \
-              AWS_S3_BACKEND_KEY='s3backend/terraform.tfstate' \
+              AWS_S3_BACKEND_KEY="s3backend/terraform.tfstate" \
               j2 terraform/templates/2.bootstrap.j2 -o /tmp/backend/main.tf \
             )
+            cat /tmp/backend/main.tf
 
             terraform -chdir=/tmp/backend init -migrate-state -input=false -force-copy
             terraform -chdir=/tmp/backend apply -auto-approve && \
@@ -72,7 +77,12 @@ jobs:
 
       - name: Init
         run: |
+          export AWS_REGION=${{ vars.AWS_REGION }}
+          export AWS_S3_BACKEND=${{ vars.AWS_S3_BACKEND }}
+          export AWS_S3_BACKEND_KEY=${{ vars.AWS_S3_BACKEND_KEY }}
+
           j2 templates/backend.j2 -o backend.conf && echo "✨ Created backend.conf"
+          cat backend.conf
           terraform init -backend-config=backend.conf
 
       - name: Validate
