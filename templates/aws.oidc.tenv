@@ -1,0 +1,5 @@
+[default]
+region = $AWS_REGION
+role_arn = $AWS_ROLE_ARN
+web_identity_token_file = /tmp/token.jwt
+output = json
