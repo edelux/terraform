@@ -1,0 +1,33 @@
+
+terraform {
+  required_providers {
+    aws = { source = "hashicorp/aws" }
+  }
+}
+
+provider "aws" {
+  region = "{{ AWS_REGION }}"
+}
+
+resource "aws_s3_bucket" "tfstate" {
+  bucket        = "{{ AWS_S3_BACKEND }}"
+  force_destroy = true
+
+  lifecycle {
+    prevent_destroy = false
+  }
+
+  tags = {
+    Project   = "iasc"
+    Migrated  = "false"
+    Terraform = "true"
+  }
+}
+
+resource "aws_s3_bucket_versioning" "tfstate_versioning" {
+  bucket = aws_s3_bucket.tfstate.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
